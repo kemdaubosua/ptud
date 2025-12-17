@@ -30,9 +30,9 @@
                 </div>
 
                 <div class="mt-4">
-                    <a href="#" class="btn btn-outline-dark btn-sm me-2"><i class="bi bi-facebook"></i></a>
-                    <a href="#" class="btn btn-outline-dark btn-sm me-2"><i class="bi bi-instagram"></i></a>
-                    <a href="#" class="btn btn-outline-dark btn-sm"><i class="bi bi-youtube"></i></a>
+                    <a href="https://www.facebook.com/DHKT.UEH" class="btn btn-outline-dark btn-sm me-2"><i class="bi bi-facebook"></i></a>
+                    <a href="https://www.instagram.com/ueh_daihockinhtetphcm/" class="btn btn-outline-dark btn-sm me-2"><i class="bi bi-instagram"></i></a>
+                    <a href="https://www.youtube.com/@UEHChannel" class="btn btn-outline-dark btn-sm"><i class="bi bi-youtube"></i></a>
                 </div>
             </div>
 
