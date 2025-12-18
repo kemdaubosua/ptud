@@ -1,14 +1,46 @@
-<?php 
+<?php
+// 1. Khởi tạo Session
 if (session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/PTUD_Final',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
     session_start();
 }
+
+// 2. Logic lấy số lượng giỏ hàng (Chỉ chạy khi đã đăng nhập)
+$cart_count = 0;
+if (isset($_SESSION['nguoi_dung_id'])) {
+    // Kết nối CSDL riêng cho header để đảm bảo trang nào cũng load được
+    $conn_header = new mysqli("localhost", "root", "", "PTUD_Final");
+    
+    if (!$conn_header->connect_error) {
+        $uid = (int)$_SESSION['nguoi_dung_id'];
+        
+        // Query tính tổng số lượng (SUM so_luong) từ chi tiết giỏ hàng
+        $sql_count = "SELECT SUM(ct.so_luong) as total 
+                      FROM chi_tiet_gio_hang ct 
+                      JOIN gio_hang gh ON ct.gio_hang_id = gh.id 
+                      WHERE gh.nguoi_dung_id = $uid";
+        
+        $result_count = $conn_header->query($sql_count);
+        if ($result_count) {
+            $row_count = $result_count->fetch_assoc();
+            $cart_count = (int)$row_count['total'];
+        }
+        $conn_header->close();
+    }
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Symbolic</title>
+    <title>Sole Studio</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -64,22 +96,56 @@ if (session_status() === PHP_SESSION_NONE) {
                     </a>
                     
                     <div class="dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle position-relative" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-user"></i>
+                            
+                            <?php if (isset($_SESSION['nguoi_dung_id'])): ?>
+                                <span class="position-absolute start-100 translate-middle p-1 bg-success border border-light rounded-circle" style="top: 5px;">
+                                    <span class="visually-hidden">Đang online</span>
+                                </span>
+                            <?php endif; ?>
                         </a>
+
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <?php if (isset($_SESSION['user_id'])): ?>
-                                <li><a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i>Đăng xuất</a></li>
+                            <?php if (isset($_SESSION['nguoi_dung_id'])): ?>
+                                <li>
+                                    <a class="dropdown-item" href="userprofile.php">
+                                        <i class="fas fa-user-circle me-2"></i>Tài khoản của tôi
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="logout.php">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                                    </a>
+                                </li>
                             <?php else: ?>
-                                <li><a class="dropdown-item" href="login.php"><i class="fas fa-sign-in-alt me-2"></i>Đăng nhập</a></li>
-                                <li><a class="dropdown-item" href="register.php"><i class="fas fa-user-plus me-2"></i>Đăng ký</a></li>
+                                <li>
+                                    <a class="dropdown-item" href="login.php">
+                                        <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="register.php">
+                                        <i class="fas fa-user-plus me-2"></i>Đăng ký
+                                    </a>
+                                </li>
                             <?php endif; ?>
                         </ul>
                     </div>
                     
-                    <a class="nav-link" href="cart.php">
+                    <a class="nav-link position-relative" href="cart.php">
                         <i class="fas fa-shopping-cart"></i>
+                        
+                        <?php if ($cart_count > 0): ?>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                                <?php echo $cart_count > 99 ? '99+' : $cart_count; ?>
+                                <span class="visually-hidden">sản phẩm trong giỏ</span>
+                            </span>
+                        <?php endif; ?>
                     </a>
+
                 </div>
             </div>
         </div>

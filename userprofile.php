@@ -1,15 +1,35 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+if (session_status() === PHP_SESSION_NONE) session_start();
+
+$API_BASE = 'http://localhost/PTUD_Final/public';
+
+// Lưu lại thông tin session hiện tại
+$cookie = session_name() . '=' . session_id();
+
+// QUAN TRỌNG: nhả session lock trước khi gọi curl
+session_write_close();
+
+$ch = curl_init($API_BASE . '/api/auth/me');
+curl_setopt_array($ch, [
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+  CURLOPT_COOKIE => $cookie,
+  CURLOPT_TIMEOUT => 5,           // thêm để khỏi treo vô hạn nếu lỗi
+  CURLOPT_CONNECTTIMEOUT => 3,
+]);
+
+$res  = curl_exec($ch);
+$http = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+$data = json_decode($res ?: '', true);
+
+if ($http !== 200 || !($data['ok'] ?? false) || !($data['authenticated'] ?? false)) {
+  header('Location: login.php');
+  exit();
 }
 
-// Kiểm tra đăng nhập
-if (!isset($_SESSION['user'])) {
-    header('Location: login.php');
-    exit();
-}
-
-$user = $_SESSION['user'];
+$user = $data['nguoi_dung'];
 ?>
 
 <?php include 'header.php'; ?>
@@ -446,13 +466,11 @@ $user = $_SESSION['user'];
             try {
                 const response = await fetch('http://localhost/PTUD_Final/public/api/auth/cap-nhat-thong-tin', {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
-                    },
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify(formData)
                 });
-                
+
                 const data = await response.json();
                 
                 if (response.ok) {
@@ -476,9 +494,9 @@ $user = $_SESSION['user'];
             // await new Promise(r => setTimeout(r, 500)); 
 
             const response = await fetch('http://localhost/PTUD_Final/public/api/don-hang/lich-su', {
-                headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+                credentials: 'include'
             });
-            
+
             const orders = await response.json();
             
             if (orders && orders.length > 0) {
@@ -530,8 +548,9 @@ $user = $_SESSION['user'];
         const addressList = document.getElementById('addressList');
         try {
             const response = await fetch('http://localhost/PTUD_Final/public/api/dia-chi', {
-                headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+                credentials: 'include'
             });
+
             
             const addresses = await response.json();
             
@@ -628,15 +647,14 @@ $user = $_SESSION['user'];
             try {
                 const response = await fetch('http://localhost/PTUD_Final/public/api/auth/doi-mat-khau', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
-                    },
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify({
                         mat_khau_hien_tai: currentPass,
                         mat_khau_moi: newPass
                     })
                 });
+
                 
                 const data = await response.json();
                 if (response.ok) {
